@@ -1,3 +1,4 @@
+use anyhow::{bail, ensure, Context, Result};
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader};
@@ -36,14 +37,18 @@ fn main() {
     }
 }
 
-fn run<R: BufRead>(reader: R, verbose: bool) {
+fn run<R: BufRead>(reader: R, verbose: bool) -> Result<()> {
     let calc = RpnCalculator::new(verbose);
 
     for line in reader.lines() {
-        let line = line.unwrap();
-        let answer = calc.eval(&line);
-        println!("{}", answer);
+        let line = line?;
+        match calc.eval(&line) {
+            Ok(answer) => println!("answer: {}", answer),
+            Err(e) => eprintln!("{:#?}", e),
+        }
     }
+
+    Ok(())
 }
 
 struct RpnCalculator(bool);
@@ -55,14 +60,15 @@ impl RpnCalculator {
 
     // 文字列を一つずつ取り出せるようベクタ形式にする
     // その際，pop() で取り出したいので逆順にする
-    pub fn eval(&self, formula: &str) -> i32 {
+    pub fn eval(&self, formula: &str) -> Result<i32> {
         let mut tokens = formula.split_whitespace().rev().collect::<Vec<_>>();
         self.eval_inner(&mut tokens)
     }
 
     // ベクタを取り出してスタックへ入れつつ計算する
-    fn eval_inner(&self, tokens: &mut Vec<&str>) -> i32 {
+    fn eval_inner(&self, tokens: &mut Vec<&str>) -> Result<i32> {
         let mut stack = Vec::new();
+        let mut pos = 0;
 
         // ベクタの最後から取り出し，
         // - 数値ならスタックに入れる
@@ -70,11 +76,13 @@ impl RpnCalculator {
         // - 演算結果をスタックに入れる
         // ベクタが殻になって最後にスタックに残っている数値が結果になる
         while let Some(token) = tokens.pop() {
+            pos += 1;
+
             if let Ok(x) = token.parse::<i32>() {
                 stack.push(x);
             } else {
-                let y = stack.pop().expect("invalid syntax");
-                let x = stack.pop().expect("invalid syntax");
+                let y = stack.pop().context(format!("invalid syntax at {}", pos))?;
+                let x = stack.pop().context(format!("invalid syntax at {}", pos))?;
 
                 let res = match token {
                     "+" => x + y,
@@ -82,7 +90,7 @@ impl RpnCalculator {
                     "*" => x * y,
                     "/" => x / y,
                     "%" => x % y,
-                    _ => panic!("invalid token"),
+                    _ => bail!("invalid token at {}", pos),
                 };
                 stack.push(res);
             }
@@ -93,11 +101,8 @@ impl RpnCalculator {
             }
         }
 
-        if stack.len() == 1 {
-            stack[0]
-        } else {
-            panic!("invalid syntax")
-        }
+        ensure!(stack.len() == 1, "invalid syntax");
+        Ok(stack[0])
     }
 }
 
