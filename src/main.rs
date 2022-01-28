@@ -1,6 +1,6 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, stdin};
 use clap::{App, Arg};
+use std::fs::File;
+use std::io::{stdin, BufRead, BufReader};
 
 fn main() {
     let matches = App::new("My RPN program")
@@ -36,7 +36,7 @@ fn main() {
     }
 }
 
-fn run<R: BufRead>(reader:R, verbose: bool) {
+fn run<R: BufRead>(reader: R, verbose: bool) {
     let calc = RpnCalculator::new(verbose);
 
     for line in reader.lines() {
