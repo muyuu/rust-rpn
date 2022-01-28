@@ -1,3 +1,9 @@
+// 独自のエラー型を定義する
+enum MyError {
+    Io(std::io::Error),
+    Num(std::num::ParseIntError),
+}
+
 fn get_int_from_file() -> Result<i32, String> {
     let path = "number.txt";
 
