@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use clap::{App, Arg};
 
 fn main() {
@@ -19,9 +21,16 @@ fn main() {
         )
         .get_matches();
 
-    match matches.value_of("formula_file") {
-        Some(file) => println!("File specified: {}", file),
-        None => println!("No file specified"),
+    if let Some(path) = matches.value_of("formula_file") {
+        let f = File::open(path).expect("File 404");
+        let reader = BufReader::new(f);
+
+        for line in reader.lines() {
+            let line = line.unwrap();
+            println!("{}", line);
+        }
+    } else {
+        println!("No file is specified");
     }
 
     let verbose = matches.is_present("verbose");
