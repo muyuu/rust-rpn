@@ -100,3 +100,28 @@ impl RpnCalculator {
         }
     }
 }
+
+// #[...] の内側が cfg(...) の場合
+// - cargo build ( run ) の際に直下の mod が無効化される
+// - cargo test の場合は有効になる
+#[cfg(test)]
+mod tests {
+    // use super::* は，この tests モジュールの親で定義されている
+    // 構造体や関数をすべて使えるようになるキーワード
+    use super::*;
+
+    // #[test] アトリビュートでテストコードだと認識される
+    #[test]
+    fn test_ok() {
+        let calc = RpnCalculator::new(false);
+        assert_eq!(calc.eval("5"), 5);
+        assert_eq!(calc.eval("20"), 20);
+        assert_eq!(calc.eval("-10"), -10);
+
+        assert_eq!(calc.eval("2 3 +"), 5);
+        assert_eq!(calc.eval("2 3 *"), 6);
+        assert_eq!(calc.eval("2 3 -"), -1);
+        assert_eq!(calc.eval("2 3 /"), 0);
+        assert_eq!(calc.eval("2 3 %"), 2);
+    }
+}
