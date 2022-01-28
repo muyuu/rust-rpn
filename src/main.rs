@@ -21,18 +21,21 @@ fn main() {
         )
         .get_matches();
 
+    let verbose = matches.is_present("verbose");
+
     if let Some(path) = matches.value_of("formula_file") {
         let f = File::open(path).expect("File 404");
         let reader = BufReader::new(f);
 
-        for line in reader.lines() {
-            let line = line.unwrap();
-            println!("{}", line);
-        }
+        run(reader, verbose);
     } else {
         println!("No file is specified");
     }
+}
 
-    let verbose = matches.is_present("verbose");
-    println!("Is verbosity specified?: {}", verbose);
+fn run(reader: BufReader<File>, verbose: bool) {
+    for line in reader.lines() {
+        let line = line.unwrap();
+        println!("{}", line);
+    }
 }
