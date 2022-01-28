@@ -1,27 +1,10 @@
-use std::fmt;
+use anyhow::{Context, Result};
 
-// 独自のエラー型を定義する
-enum MyError {
-    Io(std::io::Error),
-    Num(std::num::ParseIntError),
-}
-
-impl fmt::Display for MyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MyError::Io(cause) => write!(f, "I/O Error: {}", cause),
-            MyError::Num(cause) => write!(f, "Parse Error: {}", cause),
-        }
-    }
-}
-
-fn get_int_from_file() -> Result<i32, MyError> {
+fn get_int_from_file() -> Result<i32> {
     let path = "number.txt";
 
-    // ファイルがない場合はエラーオブジェクトを文字列にする
-    // 最後の ? は Result 型を返す演算子
-    // 直前の結果の Result 型の値が Ok(t) なら t を返し Err(e) なら Err(e) で早期リターン
-    let num_str = std::fs::read_to_string(path).map_err(|e| MyError::Io(e))?;
+    let num_str = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read string from {}", path))?;
 
     num_str
         .trim()
@@ -29,12 +12,12 @@ fn get_int_from_file() -> Result<i32, MyError> {
         // parse() の結果が Ok の場合は2倍して Ok(t * 2) となる
         .map(|t| t * 2)
         // parse() の結果が Err の場合は e の文字列を返して Err(e) となる
-        .map_err(|e| MyError::Num(e))
+        .context("failed to parse string")
 }
 
 fn main() {
     match get_int_from_file() {
         Ok(x) => println!("{}", x),
-        Err(e) => println!("{}", e),
+        Err(e) => println!("{:#?}", e),
     }
 }
