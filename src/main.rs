@@ -124,4 +124,13 @@ mod tests {
         assert_eq!(calc.eval("2 3 /"), 0);
         assert_eq!(calc.eval("2 3 %"), 2);
     }
+
+    // エラーでパニックを出していることをテストしたい場合は
+    // #[should_panic] アトリビュートを使う
+    #[test]
+    #[should_panic]
+    fn test_ng() {
+        let calc = RpnCalculator(false);
+        calc.eval("2 2 ^");
+    }
 }
