@@ -37,9 +37,12 @@ fn main() {
 }
 
 fn run<R: BufRead>(reader:R, verbose: bool) {
+    let calc = RpnCalculator::new(verbose);
+
     for line in reader.lines() {
         let line = line.unwrap();
-        println!("{}", line);
+        let answer = calc.eval(&line);
+        println!("{}", answer);
     }
 }
 
@@ -50,7 +53,15 @@ impl RpnCalculator {
         Self(verbose)
     }
 
+    // 文字列を一つずつ取り出せるようベクタ形式にする
+    // その際，pop() で取り出したいので逆順にする
     pub fn eval(&self, formula: &str) -> i32 {
+        let mut tokens = formula.split_whitespace().rev().collect::<Vec<_>>();
+        self.eval_inner(&mut tokens)
+    }
+
+    // ベクタを取り出してスタックへ入れつつ計算する
+    fn eval_inner(&self, tokens: &mut Vec<&str>) -> i32 {
         0
     }
 }
